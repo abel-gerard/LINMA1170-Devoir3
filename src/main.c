@@ -1,4 +1,5 @@
 #include "devoir_2.h"
+#include "devoir_3.h"
 #include "utils.h"
 #include "model.h"
 #include "utils_gmsh.h"
@@ -59,12 +60,23 @@ int main(int argc, char *argv[]) {
 
     int ierr;
     double mesh_size_ratio;
-    if ((argc < 3) || (sscanf(argv[2], "%lf", &mesh_size_ratio)) != 1) {
-        printf("Usage: \n./deformation <model> <mesh_size_ratio>\n");
+    if ((argc < 9) || (sscanf(argv[2], "%lf", &mesh_size_ratio)) != 1) {
+        printf("Usage: \n./deformation <model> <mesh_size_ratio> <T> <dt> <initial.txt> <final.txt> <time.txt> <I>\n");
         printf("model: one of the model implemented in models/\n");
         printf("mesh_size_ratio: mesh size factor\n");
         return -1;
     }
+
+    // For example "./deformation fork 1 1 0.01 initial_fork_1.0.txt final_fork.txt time_fork.txt 50"
+    const double T = atof(argv[3]);
+    const double dt = atof(argv[4]);
+    const char *initial_file = argv[5];
+    const char *final_file = argv[6];
+    const char *time_file = argv[7];
+    const int _I = atoi(argv[8]); 
+
+    const double gamma = 0.5;
+    const double beta = 0.25;
 
     // Simulation parameters
     const ElementType e_type = TRI;
@@ -88,13 +100,33 @@ int main(int argc, char *argv[]) {
     
     SymBandMatrix *Kbd = model->K;
     SymBandMatrix *Mbd = model->M;
+    
+    double *u;
+    double *v;
+    int n = read_initial_conditions(initial_file, &u, &v);
+    if (n < 0) {
+        fprintf(stderr, "Error: Could not read initial conditions\n");
+        return -1;
+    }
+
+    if (newmark(
+        model->K, model->M, u, v,
+        n, dt, T, gamma, beta
+    ) < 0) {
+        fprintf(stderr, "Error: Newmark algorithm failed\n");
+        return -1;
+    }
+
     CSRMatrix *Ksp = band_to_sym_csr(Kbd);
     CSRMatrix *Msp = band_to_sym_csr(Mbd);
     double eps = 1e-8;
     CG(Ksp->n, Ksp->row_ptr, Ksp->col_idx, Ksp->data, rhs, sol, eps);    
-    display_sol(model, sol);
-    
+    display_sol(model, sol);    
+
     // Free stuff
+    free(u);
+    free(v);
+
     free_csr(Ksp);
     free_csr(Msp);
     gmshFinalize(&ierr);
