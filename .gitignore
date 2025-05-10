@@ -1,5 +1,7 @@
 build
 gmsh-sdk
-deformation
+venv
 .vscode
+
+deformation
 *.txt

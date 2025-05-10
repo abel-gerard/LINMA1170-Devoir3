@@ -176,11 +176,10 @@ int newmark(
         daxpy(2 * n, (1-gamma),  u, interp);
         daxpy(2 * n,    gamma, rhs, interp);
         
-        // here, v just serve as a temporary variable
-        Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, interp, v);
+        Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, interp, tmp);
         
         // Update velocity
-        daxpy(2 * n, -dt, v, p);
+        daxpy(2 * n, -dt, tmp, p);
         
         memcpy(u, rhs, 2 * n * sizeof(double));
         
@@ -192,6 +191,7 @@ int newmark(
         fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", t, u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
         
         #if DEV_3_LOG == 1
+
         Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, u, tmp); 
         double Ep = 0.;
         for (int k = 0; k < 2 * n; k++)
@@ -204,7 +204,9 @@ int newmark(
             Ek += v[k] * tmp[k];
         Ek /= 2.;
 
-        fprintf(log, "%.15le %.15le %.15le\n", Ep, Ek, Ep + Ek);
+        // The total energy should be constant
+        fprintf(log, "%.15le %.15le %.15le %.15le\n", t, Ep, Ek, Ep + Ek);
+
         #endif
     }
 
