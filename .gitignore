@@ -2,3 +2,4 @@ build
 gmsh-sdk
 deformation
 .vscode
+*.txt

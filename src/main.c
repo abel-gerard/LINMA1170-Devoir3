@@ -111,7 +111,8 @@ int main(int argc, char *argv[]) {
 
     if (newmark(
         model->K, model->M, u, v,
-        n, dt, T, gamma, beta
+        n, dt, T, gamma, beta,
+        final_file, time_file, _I
     ) < 0) {
         fprintf(stderr, "Error: Newmark algorithm failed\n");
         return -1;
