@@ -1,6 +1,8 @@
 #include "devoir_3.h"
 
 
+#define DEV_3_LOG 1
+
 int read_initial_conditions(const char *filename, double **u, double **v) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -111,6 +113,16 @@ int newmark(
         return -1;
     }
 
+    #if DEV_3_LOG == 1
+    FILE *log = fopen("log.txt", "w");
+    if (log == NULL) {
+        fprintf(stderr, "Error: Could not open file log.txt\n");
+        fclose(final);
+        fclose(time);
+        return -1;
+    }
+    #endif
+
     fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", 0., u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
 
     int return_code = 0;
@@ -140,7 +152,8 @@ int newmark(
     double *p = (double *) malloc(2 * n * sizeof(double));
     double *rhs = (double *) malloc(2 * n * sizeof(double));
     double *interp = (double *) malloc(2 * n * sizeof(double));
-    if (p == NULL || rhs == NULL || interp == NULL) {
+    double *tmp = (double *) malloc(2 * n * sizeof(double));
+    if (p == NULL || rhs == NULL || interp == NULL || tmp == NULL) {
         fprintf(stderr, "Error: Memory allocation failed\n");
         return_code = -1;
         goto free_matrices;
@@ -175,7 +188,24 @@ int newmark(
         solve_sym_band(Mbd_cpy->data, Mbd_cpy->n, Mbd_cpy->k, v);
         
         t += dt;
+
         fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", t, u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
+        
+        #if DEV_3_LOG == 1
+        Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, u, tmp); 
+        double Ep = 0.;
+        for (int k = 0; k < 2 * n; k++)
+            Ep += u[k] * tmp[k];
+        Ep /= 2.;
+
+        Matvec(M_csr->n, M_csr->row_ptr, M_csr->col_idx, M_csr->data, v, tmp);
+        double Ek = 0.;
+        for (int k = 0; k < 2 * n; k++)
+            Ek += v[k] * tmp[k];
+        Ek /= 2.;
+
+        fprintf(log, "%.15le %.15le %.15le\n", Ep, Ek, Ep + Ek);
+        #endif
     }
 
     for (int k = 0; k < n; k++)
@@ -185,6 +215,7 @@ free_all:
     free(p);
     free(rhs);
     free(interp);
+    free(tmp);
 free_matrices:
     free_csr(M_csr);
     free_csr(K_csr);
@@ -195,8 +226,13 @@ free_matrices:
 
     fclose(final);
     fclose(time);
+    #if DEV_3_LOG == 1
+    fclose(log);
+    #endif
 
     return return_code;
 
 #undef daxpy
 }
+
+#undef DEV_3_LOG
