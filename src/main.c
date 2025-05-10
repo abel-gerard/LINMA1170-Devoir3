@@ -117,18 +117,20 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    CSRMatrix *Ksp = band_to_sym_csr(Kbd);
-    CSRMatrix *Msp = band_to_sym_csr(Mbd);
-    double eps = 1e-8;
-    CG(Ksp->n, Ksp->row_ptr, Ksp->col_idx, Ksp->data, rhs, sol, eps);    
-    display_sol(model, sol);    
+    // CSRMatrix *Ksp = band_to_sym_csr(Kbd);
+    // CSRMatrix *Msp = band_to_sym_csr(Mbd);
+    // double eps = 1e-8;
+    // CG(Ksp->n, Ksp->row_ptr, Ksp->col_idx, Ksp->data, rhs, sol, eps);    
+    // display_sol(model, sol);
+
+    display_sol(model, u);    
 
     // Free stuff
     free(u);
     free(v);
 
-    free_csr(Ksp);
-    free_csr(Msp);
+    // free_csr(Ksp);
+    // free_csr(Msp);
     gmshFinalize(&ierr);
     free(sol);
     free(rhs);

@@ -1,8 +1,5 @@
 #include "devoir_3.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
 
 int read_initial_conditions(const char *filename, double **u, double **v) {
     FILE *file = fopen(filename, "r");
@@ -59,9 +56,13 @@ int newmark(
     const SymBandMatrix *Kbd, const SymBandMatrix *Mbd, double *u, double *v,
     const int n, const double dt, const double T, const double gamma, const double beta        
 ) {
+#define daxpy(n, a, x, y) \
+    for (int k = 0; k < (n); k++) {\
+        (y)[k] += (a) * (x)[k]; \
+    }
 
-    CSRMatrix *M_csr = band_to_csr(Mbd);
-    CSRMatrix *K_csr = band_to_csr(Kbd);
+    CSRMatrix *M_csr = band_to_sym_csr(Mbd);
+    CSRMatrix *K_csr = band_to_sym_csr(Kbd);
 
     // assemble_system guarantees that both matrices are the same size and same band.
     SymBandMatrix *lhs_bd = allocate_sym_band_matrix(Kbd->n, Kbd->k);
@@ -76,7 +77,7 @@ int newmark(
         rhs_bd->data[k] = Mbd->data[k] - (dt*dt/2.)*(1.-2.*beta) * Kbd->data[k];
 
     // For future matrix multiplications
-    CSRMatrix *rhs_csr = band_to_csr(rhs_bd);
+    CSRMatrix *rhs_csr = band_to_sym_csr(rhs_bd);
 
     double *p = (double *) malloc(2 * n * sizeof(double));
     double *rhs = (double *) malloc(2 * n * sizeof(double));
@@ -97,44 +98,40 @@ int newmark(
     double t = 0.;
     while (t < T) {
         printf("%lf\n", u[0]);
-        if (fabs(u[0]) > 1e12) {
-            fprintf(stderr, "Fatal error: Displacement exceeds threshold\n");
-            exit(EXIT_FAILURE);
-        }
-
+        
         // Compute the right-hand side of first equation
         Matvec(rhs_csr->n, rhs_csr->row_ptr, rhs_csr->col_idx, rhs_csr->data, u, rhs);
-        for (int k = 0; k < 2 * n; k++)
-            rhs[k] += dt * p[k];
-
+        daxpy(2 * n, dt, p, rhs);
+        
         // Solve the system, new u is in rhs 
         solve_sym_band(lhs_bd->data, lhs_bd->n, lhs_bd->k, rhs);
-
+        
         // Linear interpolation of u
-        for (int k = 0; k < 2 * n; k++)
-            interp[k] = (1-gamma) * u[k] + gamma * rhs[k];
-
+        memset(interp, 0, 2 * n * sizeof(double));
+        daxpy(2 * n, (1-gamma),  u, interp);
+        daxpy(2 * n,    gamma, rhs, interp);
+        
         // here, v just serve as a temporary variable
         Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, interp, v);
         
         // Update velocity
-        for (int k = 0; k < 2 * n; k++)
-            p[k] -= dt * v[k]; 
+        daxpy(2 * n, -dt, v, p);
         
         memcpy(u, rhs, 2 * n * sizeof(double));
 
         t += dt;
     }
 
-    SymBandMatrix Mbd_cpy;
-    memcpy(&Mbd_cpy, Mbd, sizeof(SymBandMatrix));
-    sym_band_LDL(Mbd_cpy.data, Mbd_cpy.n, Mbd_cpy.k);
-    solve_sym_band(Mbd_cpy.data, Mbd_cpy.n, Mbd_cpy.k, p);
+    SymBandMatrix *Mbd_cpy = allocate_sym_band_matrix(Mbd->n, Mbd->k);
+    memcpy(Mbd_cpy, Mbd, sizeof(SymBandMatrix));
+    sym_band_LDL(Mbd_cpy->data, Mbd_cpy->n, Mbd_cpy->k);
+    solve_sym_band(Mbd_cpy->data, Mbd_cpy->n, Mbd_cpy->k, p);
     memcpy(v, p, 2 * n * sizeof(double));
 
     free_csr(M_csr);
     free_csr(K_csr);
     free_csr(rhs_csr);
+    free(Mbd_cpy);
     free_sym_band_matrix(lhs_bd);
     free_sym_band_matrix(rhs_bd);
     free(p);
@@ -142,4 +139,6 @@ int newmark(
     free(interp);
 
     return 0;
+
+#undef daxpy
 }

@@ -36,7 +36,7 @@ else
 endif
 
 # Flags de compilation
-CFLAGS := -O3 #-Wall -Werror -fsanitize=address
+CFLAGS := -O3 #-Wall -Werror #-fsanitize=address
 INC_DIRS := -I $(INC_DIR) -I $(GMSH_INC_DIR) # Chemins vers les dir `include`
 LIB_DIR := -L $(GMSH_LIB_DIR) # Chemins vers les dir `lib`
 
