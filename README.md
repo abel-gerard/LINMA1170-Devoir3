@@ -1,0 +1,1 @@
+![GIF of displacement](animation.gif)

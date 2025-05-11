@@ -4,6 +4,7 @@
 #include "model.h"
 #include <stddef.h>
 
+void display_sol(FE_Model *model, double *sol, const char *filename);
 
 void load_mesh(FE_Model *model);
 

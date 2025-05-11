@@ -2,6 +2,7 @@
 
 
 #define DEV_3_LOG 1
+#define GIF 1
 
 int read_initial_conditions(const char *filename, double **u, double **v) {
     FILE *file = fopen(filename, "r");
@@ -55,7 +56,7 @@ int read_initial_conditions(const char *filename, double **u, double **v) {
 }
 
 int newmark(
-    const SymBandMatrix *Kbd, const SymBandMatrix *Mbd, double *u, double *v,
+    FE_Model *model, double *u, double *v,
     const unsigned int n, const double dt, const double T, const double gamma, const double beta,
     const char *final_filename, const char *time_filename, const unsigned int I        
 ) {
@@ -63,6 +64,10 @@ int newmark(
     for (int k = 0; k < (n); k++) {\
         (y)[k] += (a) * (x)[k]; \
     }
+
+    SymBandMatrix *Kbd = model->K;
+    SymBandMatrix *Mbd = model->M;
+    int ierr;
 
     if (dt == 0.) {
         fprintf(stderr, "Error: dt must be greater than 0\n");
@@ -114,6 +119,7 @@ int newmark(
     }
 
     #if DEV_3_LOG == 1
+
     FILE *log = fopen("log.txt", "w");
     if (log == NULL) {
         fprintf(stderr, "Error: Could not open file log.txt\n");
@@ -206,7 +212,20 @@ int newmark(
 
         // The total energy should be constant
         fprintf(log, "%.15le %.15le %.15le %.15le\n", t, Ep, Ek, Ep + Ek);
+        #endif
 
+        #if GIF == 1
+        char name[256];
+        struct timespec ts = {
+            .tv_sec = 0,
+            .tv_nsec = 10000000
+        };
+
+        sprintf(name, "img/disp_%d.png", (int)(t/dt));
+        gmshFltkInitialize(&ierr);
+        nanosleep(&ts, NULL);
+        display_sol(model, u, name);
+        gmshFltkFinalize(&ierr);
         #endif
     }
 

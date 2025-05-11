@@ -15,6 +15,28 @@
 #define CART_TO_POLAR 0
 #define DISPLAY_AVG 0
 
+void display_sol(FE_Model *model, double *sol, const char *filename) {
+    int ierr, n_views, *views;
+    double *bounds;
+    add_gmsh_views(&views, &n_views, &bounds);
+
+    double *data_forces = malloc(6 * model->n_bd_edge * sizeof(double));
+    visualize_disp(model, sol, views[1], 0, &bounds[2]);
+    visualize_stress(model, sol, views, 1, 0, data_forces, bounds);
+    visualize_bd_forces(model, data_forces, views[0], 1, &bounds[0]);
+    
+    create_tensor_aliases(views);
+    set_view_options(n_views, views, bounds);
+
+    if (filename != NULL) {
+        gmshGraphicsDraw(&ierr);
+        gmshWrite(filename, &ierr);
+    } else {
+        gmshFltkRun(&ierr);
+    }
+    free(data_forces);
+}
+
 void load_mesh(FE_Model *model) {
     int ierr;
     int e_type = model->e_type;
@@ -364,8 +386,11 @@ void set_view_options(int n_views, int *views, double *bounds) {
     gmshModelGetBoundingBox(-1, -1, UNZIP6(box), &ierr);
     dl = hypot(box[3] - box[0], box[4] - box[1]);
     // factor = bounds[2 * 1 + 1];
-    factor = bounds[2 * 1 + 0];
-    factor = (factor < 1e-20) ? 1. : (dl / 20.) / factor;
+
+    // factor = bounds[2 * 1 + 0];
+    // factor = (factor < 1e-20) ? 1. : (dl / 20.) / factor;
+    factor = 1e2; // Setting constant factor for now
+
     gmshViewOptionSetNumber(views[1], "DisplacementFactor", factor, &ierr);
 
     // Hide the mesh

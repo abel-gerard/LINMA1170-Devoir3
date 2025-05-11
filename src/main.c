@@ -14,23 +14,6 @@
 #define VERBOSE 1
 #define PRECISION 10
 
-void display_sol(FE_Model *model, double *sol) {
-    int ierr, n_views, *views;
-    double *bounds;
-    add_gmsh_views(&views, &n_views, &bounds);
-
-    double *data_forces = malloc(6 * model->n_bd_edge * sizeof(double));
-    visualize_disp(model, sol, views[1], 0, &bounds[2]);
-    visualize_stress(model, sol, views, 1, 0, data_forces, bounds);
-    visualize_bd_forces(model, data_forces, views[0], 1, &bounds[0]);
-
-    create_tensor_aliases(views);
-    set_view_options(n_views, views, bounds);
-    gmshFltkRun(&ierr);
-    gmshFltkFinalize(&ierr);
-    free(data_forces);
-}
-
 void display_info(FE_Model *model, int step, struct timespec ts[4]) {
 
     char *m_str[3] = {"Plane stress", "Plane strain", "Axisymmetric"};
@@ -54,7 +37,6 @@ void display_info(FE_Model *model, int step, struct timespec ts[4]) {
         printf("%30s = %zu\n\n", "Matrix bandwidth", 2 * model->node_band + 1);
     }
 }
-
 
 int main(int argc, char *argv[]) {
 
@@ -109,8 +91,9 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+
     if (newmark(
-        model->K, model->M, u, v,
+        model, u, v,
         n, dt, T, gamma, beta,
         final_file, time_file, _I
     ) < 0) {
@@ -118,13 +101,14 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+
     // CSRMatrix *Ksp = band_to_sym_csr(Kbd);
     // CSRMatrix *Msp = band_to_sym_csr(Mbd);
     // double eps = 1e-8;
     // CG(Ksp->n, Ksp->row_ptr, Ksp->col_idx, Ksp->data, rhs, sol, eps);    
     // display_sol(model, sol);
 
-    display_sol(model, u);    
+    // display_sol(model, u, NULL);    
 
     // Free stuff
     free(u);

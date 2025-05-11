@@ -3,11 +3,15 @@
 #include "model.h"
 #include "utils.h"
 #include "devoir_2.h"
+#include "gmshc.h"
+#include "utils_gmsh.h"
 
 #include <string.h>
 #include <stdio.h> 
 #include <math.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
 
 
 /**
@@ -40,7 +44,7 @@ int read_initial_conditions(const char *filename, double **u, double **v);
  * @note The final position and velocity values will be stored in the arrays u and v.
  */
 int newmark(
-    const SymBandMatrix *Kbd, const SymBandMatrix *Mbd, double *u, double *v,
+    FE_Model *model, double *u, double *v,
     const unsigned int n, const double dt, const double T, const double gamma, const double beta,
     const char *final_filename, const char *time_filename, const unsigned int I      
 );

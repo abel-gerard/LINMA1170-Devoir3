@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
+import imageio.v2 as imageio
 import os
 import sys
 
@@ -64,7 +65,26 @@ if __name__ == "__main__":
         plt.show()
  
     elif analysis == "animation":
-        pass 
+        if len(sys.argv) < 4:
+            print("Missing dt and/or T parameters.")
+            exit(1)
+
+        try:
+            dt = float(sys.argv[2])
+            T = float(sys.argv[3])
+        except:
+            print("Expected floats.")
+            exit(1)
+
+        num_frames = int(T/dt)
+        image_paths = [f"img/disp_{i}.png" for i in range(1, num_frames)]
+        with imageio.get_writer('animation.gif', mode='I', duration=T) as writer:
+            for i, filename in enumerate(image_paths):
+                try:
+                    image = imageio.imread(filename)
+                    writer.append_data(image)
+                except FileNotFoundError:
+                    print(f"Warning: Image {filename} not found. Skipping.")
 
     elif analysis == "frequency":
         t = lines[:, 0]
