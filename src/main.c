@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-
     if (newmark(
         model, u, v,
         n, dt, T, gamma, beta,
@@ -100,7 +99,6 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: Newmark algorithm failed\n");
         return -1;
     }
-
 
     // CSRMatrix *Ksp = band_to_sym_csr(Kbd);
     // CSRMatrix *Msp = band_to_sym_csr(Mbd);

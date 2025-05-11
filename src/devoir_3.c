@@ -2,7 +2,7 @@
 
 
 #define DEV_3_LOG 1
-#define GIF 1
+#define GIF 0
 
 int read_initial_conditions(const char *filename, double **u, double **v) {
     FILE *file = fopen(filename, "r");

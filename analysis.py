@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 import imageio.v2 as imageio
 import os
 import sys
@@ -133,7 +134,86 @@ if __name__ == "__main__":
         plt.legend()
         plt.grid()
         plt.show()
+    
+    elif analysis == "state":
+        if len(sys.argv) < 4:
+            print("Missing the time file and/or node index.")
+            exit(1)
+
+        with open(sys.argv[2], "r") as f:
+            moves = np.array([list(map(np.float64, line.strip().split())) for line in f.readlines()])
+
+        try:
+            node = int(sys.argv[3])
+        except:
+            print("Expected integer.")
+            exit(1)
+
+        t = moves[:, 0]
+        x = moves[:, 1]
+        y = moves[:, 2]
+        vx = moves[:, 3]
+        vy = moves[:, 4]
+
+        vx = np.convolve(vx, np.ones(20)/20, mode='same')
+        vy = np.convolve(vy, np.ones(20)/20, mode='same')
+
+        factor = 10
+        N = len(x)
+
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+
+        ax1.set_xlim(min(x) - np.std(x), max(x) + np.std(x))
+        ax1.set_ylim(min(y) - np.std(y), max(y) + np.std(y))
+        time_text = ax1.text(0.05, 0.95, '', transform=ax1.transAxes, fontsize=12, verticalalignment='top')
+        ax1.set_title(f"Trajectory of Node {node}")
+        line1, = ax1.plot([], [], 'bo', markersize=1, alpha=0.05)
+        tracker1, = ax1.plot([], [], 'bx', markersize=5, alpha=1)
+
+        ax2.set_xlim(min(vx) - np.std(vx), max(vx) + np.std(vx))
+        ax2.set_ylim(min(vy) - np.std(vy), max(vy) + np.std(vy))
+        ax2.set_title(f"(Smoothed) Velocity of Node {node}")
+        line2, = ax2.plot([], [], 'ro', markersize=1, alpha=0.05)
+        tracker2, = ax2.plot([], [], 'rx', markersize=5, alpha=1)
+
+        x_plot, y_plot = [], []
+        vx_plot, vy_plot = [], []
+
+        def update(frame):
+            x_plot.extend(x[factor*frame:factor*(frame+1)])
+            y_plot.extend(y[factor*frame:factor*(frame+1)])
+
+            vx_plot.append(vx[factor*frame:factor*(frame+1)])
+            vy_plot.append(vy[factor*frame:factor*(frame+1)])
+
+            time_text.set_text(f'Time = {t[factor*(frame+1)-1]:.3f} s')
+
+            if len(vx_plot) > 200:
+                vx_plot.pop(0)
+                vy_plot.pop(0)
+            
+            line1.set_data(x_plot, y_plot)
+            tracker1.set_data([x_plot[-1]], [y_plot[-1]])
+
+            line2.set_data(vx_plot, vy_plot)
+            tracker2.set_data([vx_plot[-1]], [vy_plot[-1]])
+
+            return line1, line2, tracker1, tracker2, time_text
+
+        ani = animation.FuncAnimation(fig, update, frames=N//factor, interval=1, blit=True, repeat=False)
+
+        plt.tight_layout()
+        plt.show()
+
+        query = input("Do you want to save the animation? This can take some time (y/n): ")
+        if query.lower() == "y":
+            ani.save(f"state_{node}.gif", writer='pillow', fps=30)
+            print(f"Animation saved as state_{node}.gif")
+        elif query.lower() == "n":
+            print("Animation not saved.")
+        
+        plt.close(fig)
 
     else:
-        print("Unrecognized analysis option, either 'energy', 'frequency'.")
+        print("Unrecognized analysis option, either 'energy', 'animation' or 'frequency'.")
         exit(1)
