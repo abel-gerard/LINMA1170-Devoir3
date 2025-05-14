@@ -5,6 +5,7 @@ import matplotlib.animation as animation
 import imageio.v2 as imageio
 import os
 import sys
+from tqdm import tqdm
 
 
 if __name__ == "__main__":
@@ -57,10 +58,10 @@ if __name__ == "__main__":
         plt.plot(t, Ec, label="$E_c$", color="#D043CC", linewidth=2, linestyle="--")
         plt.plot(t, E, label="$E$", color="#AAD043", linewidth=2)
 
-        plt.xlabel("Time (s)")
-        plt.ylabel("Energy (J)")
-        plt.title("Energy vs Time")
-        plt.legend()
+        plt.xlabel("Time [$s$]", fontsize=12)
+        plt.ylabel("Energy [$J$]", fontsize=12)
+        plt.title("Energy vs Time", fontsize=14)
+        plt.legend(fontsize=12)
         plt.grid()
 
         plt.show()
@@ -80,9 +81,13 @@ if __name__ == "__main__":
         num_frames = int(T/dt)
         image_paths = [f"img/disp_{i}.png" for i in range(1, num_frames)]
         with imageio.get_writer('animation.gif', mode='I', duration=T) as writer:
-            for i, filename in enumerate(image_paths):
+            for i, filename in tqdm(enumerate(image_paths)):
                 try:
                     image = imageio.imread(filename)
+                    data = np.array(image)
+                    if np.all(data == 0):
+                        print(f"Warning: Image {filename} is empty. Skipping.")
+                        continue
                     writer.append_data(image)
                 except FileNotFoundError:
                     print(f"Warning: Image {filename} not found. Skipping.")
@@ -102,11 +107,17 @@ if __name__ == "__main__":
         frequencies = fftfreq(N, dt)[:N//2]
 
         plt.plot(frequencies, spectrum, color="#43CCD0", linewidth=2)
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Amplitude (J)")
-        plt.title("Spectrum of (Detrended) Kinetic Energy")
+        plt.xlabel("Frequency ($Hz$)", fontsize=12)
+        plt.ylabel("Amplitude ($J$)", fontsize=12)
+        plt.title("Spectrum of (Detrended) Kinetic Energy", fontsize=14)    
         plt.grid()
         plt.show()
+        
+        if len(sys.argv) < 3:
+            exit(0)
+        if len(sys.argv) < 4:
+            print("Missing the time file and/or node index.")
+            exit(1)
 
         with open(sys.argv[2], "r") as f:
             moves = np.array([list(map(np.float64, line.strip().split())) for line in f.readlines()])
@@ -118,20 +129,20 @@ if __name__ == "__main__":
         vy = moves[:, 4]
 
         mean_x = np.mean(x)
-        print(f"Mean x position of node 0: {mean_x} [m]")
+        print(f"Mean x position of node 0: {mean_x} [$m$]")
         spectrum_x = np.abs(fft(x-mean_x))[:N//2]
         frequencies = fftfreq(N, dt)[:N//2]
 
         mean_y = np.mean(y)
-        print(f"Mean y position of node 0: {mean_y} [m]")
+        print(f"Mean y position of node 0: {mean_y} [$m$]")
         spectrum_y = np.abs(fft(y-mean_y))[:N//2]
 
         plt.plot(frequencies, spectrum_x, color="#D04394", linewidth=2, label="x")
         plt.plot(frequencies, spectrum_y, color="#43D07F", linewidth=2, label="y")
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Amplitude (m)")
-        plt.title("Spectrum of (Detrended) Position of Node 0")
-        plt.legend()
+        plt.xlabel("Frequency ($Hz$)")
+        plt.ylabel("Amplitude ($m$)")
+        plt.title(f"Spectrum of (Detrended) Position of Node {sys.argv[3]}")
+        plt.legend(fontsize=12)
         plt.grid()
         plt.show()
     
@@ -155,50 +166,50 @@ if __name__ == "__main__":
         vx = moves[:, 3]
         vy = moves[:, 4]
 
-        vx = np.convolve(vx, np.ones(20)/20, mode='same')
-        vy = np.convolve(vy, np.ones(20)/20, mode='same')
+        # vx = np.convolve(vx, np.ones(20)/20, mode='same')
+        # vy = np.convolve(vy, np.ones(20)/20, mode='same')
 
         factor = 10
-        N = len(x)
+        N = 20*1000#len(x)
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+        fig, (ax1) = plt.subplots(figsize=(5, 5))
 
         ax1.set_xlim(min(x) - np.std(x), max(x) + np.std(x))
         ax1.set_ylim(min(y) - np.std(y), max(y) + np.std(y))
         time_text = ax1.text(0.05, 0.95, '', transform=ax1.transAxes, fontsize=12, verticalalignment='top')
         ax1.set_title(f"Trajectory of Node {node}")
         line1, = ax1.plot([], [], 'bo', markersize=1, alpha=0.05)
-        tracker1, = ax1.plot([], [], 'bx', markersize=5, alpha=1)
+        tracker1, = ax1.plot([], [], 'rx', markersize=7, alpha=1)
 
-        ax2.set_xlim(min(vx) - np.std(vx), max(vx) + np.std(vx))
-        ax2.set_ylim(min(vy) - np.std(vy), max(vy) + np.std(vy))
-        ax2.set_title(f"(Smoothed) Velocity of Node {node}")
-        line2, = ax2.plot([], [], 'ro', markersize=1, alpha=0.05)
-        tracker2, = ax2.plot([], [], 'rx', markersize=5, alpha=1)
+        # ax2.set_xlim(min(vx) - np.std(vx), max(vx) + np.std(vx))
+        # ax2.set_ylim(min(vy) - np.std(vy), max(vy) + np.std(vy))
+        # ax2.set_title(f"(Smoothed) Velocity of Node {node}")
+        # line2, = ax2.plot([], [], 'ro', markersize=1, alpha=0.05)
+        # tracker2, = ax2.plot([], [], 'rx', markersize=5, alpha=1)
 
         x_plot, y_plot = [], []
-        vx_plot, vy_plot = [], []
+        # vx_plot, vy_plot = [], []
 
         def update(frame):
             x_plot.extend(x[factor*frame:factor*(frame+1)])
             y_plot.extend(y[factor*frame:factor*(frame+1)])
 
-            vx_plot.append(vx[factor*frame:factor*(frame+1)])
-            vy_plot.append(vy[factor*frame:factor*(frame+1)])
+            # vx_plot.append(vx[factor*frame:factor*(frame+1)])
+            # vy_plot.append(vy[factor*frame:factor*(frame+1)])
 
             time_text.set_text(f'Time = {t[factor*(frame+1)-1]:.3f} s')
 
-            if len(vx_plot) > 200:
-                vx_plot.pop(0)
-                vy_plot.pop(0)
+            # if len(vx_plot) > 200:
+            #     vx_plot.pop(0)
+            #     vy_plot.pop(0)
             
             line1.set_data(x_plot, y_plot)
             tracker1.set_data([x_plot[-1]], [y_plot[-1]])
 
-            line2.set_data(vx_plot, vy_plot)
-            tracker2.set_data([vx_plot[-1]], [vy_plot[-1]])
+            # line2.set_data(vx_plot, vy_plot)
+            # tracker2.set_data([vx_plot[-1]], [vy_plot[-1]])
 
-            return line1, line2, tracker1, tracker2, time_text
+            return line1, tracker1, time_text
 
         ani = animation.FuncAnimation(fig, update, frames=N//factor, interval=1, blit=True, repeat=False)
 
@@ -215,5 +226,5 @@ if __name__ == "__main__":
         plt.close(fig)
 
     else:
-        print("Unrecognized analysis option, either 'energy', 'animation' or 'frequency'.")
+        print("Unrecognized analysis option, either 'energy', 'animation', state or 'frequency'.")
         exit(1)
