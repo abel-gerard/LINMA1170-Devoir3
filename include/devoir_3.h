@@ -11,8 +11,11 @@
 #include <math.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <time.h>
 
+
+const int __DT_REG = 8;
 
 /**
  * @brief Reads the initial conditions from a file into a position and velocity arrays.

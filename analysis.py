@@ -1,11 +1,13 @@
-import numpy as np
-from scipy.fft import fft, fftfreq
-import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from scipy.signal import find_peaks
+from scipy.fft import fft, fftfreq
+from scipy.io import wavfile
+import matplotlib.pyplot as plt
 import imageio.v2 as imageio
-import os
-import sys
 from tqdm import tqdm
+import numpy as np
+import sys
+import os
 
 
 if __name__ == "__main__":
@@ -20,7 +22,10 @@ if __name__ == "__main__":
         exit(1)
 
     with open(log, "r") as f:
+        magic = np.float64(f.readline().strip())
         lines = np.array([list(map(np.float64, line.strip().split())) for line in f.readlines()])
+
+    print(f"Magic number: {magic:.15e}")
 
     analysis = sys.argv[1]
     if analysis == "energy":
@@ -49,10 +54,12 @@ if __name__ == "__main__":
                 exit(1)
             end = int(end*len(lines))
 
-        t = lines[begin:end, 0]
+        t  = lines[begin:end, 0]
         Ep = lines[begin:end, 1]
         Ec = lines[begin:end, 2]
-        E = lines[begin:end, 3]
+        E  = lines[begin:end, 3]
+
+        t *= magic
 
         plt.plot(t, Ep, label="$E_p$", color="#43CCD0", linewidth=2, linestyle="--")
         plt.plot(t, Ec, label="$E_c$", color="#D043CC", linewidth=2, linestyle="--")
@@ -98,20 +105,21 @@ if __name__ == "__main__":
         Ec = lines[:, 2]
         E = lines[:, 3]
 
+        t *= magic
         dt = t[1] - t[0]
         N = len(t)
 
-        mean = np.mean(Ec)
-        print(f"Mean kinetic energy: {mean} [J]")
-        spectrum = np.abs(fft(Ec-mean))[:N//2]
-        frequencies = fftfreq(N, dt)[:N//2]
+        # mean = np.mean(Ec)
+        # print(f"Mean kinetic energy: {mean} [J]")
+        # spectrum = np.abs(fft(Ec-mean))[:N//2]
+        # frequencies = fftfreq(N, dt)[:N//2]
 
-        plt.plot(frequencies, spectrum, color="#43CCD0", linewidth=2)
-        plt.xlabel("Frequency ($Hz$)", fontsize=12)
-        plt.ylabel("Amplitude ($J$)", fontsize=12)
-        plt.title("Spectrum of (Detrended) Kinetic Energy", fontsize=14)    
-        plt.grid()
-        plt.show()
+        # plt.plot(frequencies, spectrum, color="#43CCD0", linewidth=2)
+        # plt.xlabel("Frequency ($Hz$)", fontsize=12)
+        # plt.ylabel("Amplitude ($J$)", fontsize=12)
+        # plt.title("Spectrum of (Detrended) Kinetic Energy", fontsize=14)    
+        # plt.grid()
+        # plt.show()
         
         if len(sys.argv) < 3:
             exit(0)
@@ -128,20 +136,38 @@ if __name__ == "__main__":
         vx = moves[:, 3]
         vy = moves[:, 4]
 
+        t *= magic
+        x *= magic
+        y *= magic
+
         mean_x = np.mean(x)
-        print(f"Mean x position of node 0: {mean_x} [$m$]")
+        print(f"Mean x position of node {sys.argv[3]}: {mean_x} [m]")
         spectrum_x = np.abs(fft(x-mean_x))[:N//2]
         frequencies = fftfreq(N, dt)[:N//2]
 
         mean_y = np.mean(y)
-        print(f"Mean y position of node 0: {mean_y} [$m$]")
+        print(f"Mean y position of node {sys.argv[3]}: {mean_y} [m]")
         spectrum_y = np.abs(fft(y-mean_y))[:N//2]
 
+        peaks_x, _ = find_peaks(spectrum_x, height=1e-5, distance=10)
+        peaks_y, _ = find_peaks(spectrum_y, height=1e-5, distance=10)
+        peaks = np.concatenate((peaks_x, peaks_y))
+        peaks = np.unique(peaks)
+        peaks = peaks[:3]
+        mid_freq = frequencies[peaks][len(peaks)//2]
+        diff_freq = frequencies[peaks][-1] - frequencies[peaks][0]
+
+        lines_xs = [0, frequencies[peaks][0]*1.2, frequencies[peaks][1]*1.2]
         plt.plot(frequencies, spectrum_x, color="#D04394", linewidth=2, label="x")
         plt.plot(frequencies, spectrum_y, color="#43D07F", linewidth=2, label="y")
-        plt.xlabel("Frequency ($Hz$)")
-        plt.ylabel("Amplitude ($m$)")
-        plt.title(f"Spectrum of (Detrended) Position of Node {sys.argv[3]}")
+        plt.hlines(spectrum_y[peaks], lines_xs, frequencies[peaks], color="#3E6BFF", linestyles="--")
+        for x, peak in zip(lines_xs, peaks):
+            plt.text(x, spectrum_y[peak], f"{frequencies[peak]:.2f} [Hz]", fontsize=10, color="#3E6BFF", ha="left", va="bottom")
+        
+        plt.xlim(mid_freq-1.1*diff_freq, mid_freq+1.1*diff_freq)
+        plt.xlabel("Frequency [$Hz$]", fontsize=12)
+        plt.ylabel("Amplitude [$m$]", fontsize=12)
+        plt.title(f"Spectrum of (Detrended) Position of Node {sys.argv[3]}", fontsize=14)
         plt.legend(fontsize=12)
         plt.grid()
         plt.show()
@@ -161,7 +187,7 @@ if __name__ == "__main__":
             exit(1)
 
         t = moves[:, 0]
-        x = moves[:, 1]
+        x = moves[:, 1] 
         y = moves[:, 2]
         vx = moves[:, 3]
         vy = moves[:, 4]
@@ -225,6 +251,50 @@ if __name__ == "__main__":
         
         plt.close(fig)
 
+    elif analysis == "sound":
+        if len(sys.argv) < 3:
+            print("Missing the time file.")
+            exit(1)
+
+        with open(sys.argv[2], "r") as f:
+            moves = np.array([list(map(np.float64, line.strip().split())) for line in f.readlines()])
+
+        t = moves[:, 0]
+        x = moves[:, 1] 
+        y = moves[:, 2]
+
+        t *= magic
+        x *= magic
+        y *= magic
+        
+        N = len(x)
+        dt = t[1] - t[0]
+
+        amplitudes = np.abs(fft(y))[:N//2]
+        frequencies = fftfreq(N, dt)[:N//2]
+
+        indices, _ = find_peaks(amplitudes, height=1e-6, distance=10)
+        frequencies = frequencies[indices]
+        amplitudes = amplitudes[indices]
+        print(f"Frequencies: {frequencies}")
+
+        # Normalize the amplitudes
+        amplitudes /= np.max(amplitudes)
+        sampling_rate = 44100
+        duration = 3
+
+        t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+        y = 0.5 * np.sum([amp * np.sin(2 * np.pi * freq * t) for freq, amp in zip(frequencies, amplitudes)], axis=0)
+        y_pcm = np.int16(y * 32767)
+
+        plt.plot(t[:1000], y[:1000], color="#43CCD0", linewidth=2)
+        plt.xlabel("Time [$s$]", fontsize=12)
+        plt.ylabel("Amplitude", fontsize=12)
+        plt.title("Generated Sound Wave", fontsize=14)
+        plt.show()
+
+        wavfile.write('tuning_fork.wav', sampling_rate, y_pcm)
+
     else:
-        print("Unrecognized analysis option, either 'energy', 'animation', state or 'frequency'.")
+        print("Unrecognized analysis option, either 'energy', 'animation', 'sound', 'state' or 'frequency'.")
         exit(1)

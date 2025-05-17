@@ -104,7 +104,6 @@ int newmark(
         return -1;
     }
 
-
     FILE *final = fopen(final_filename, "w");
     if (final == NULL) {
         fprintf(stderr, "Error: Could not open file %s\n", final_filename);
@@ -119,7 +118,6 @@ int newmark(
     }
 
     #if DEV_3_LOG == 1
-
     FILE *log = fopen("log.txt", "w");
     if (log == NULL) {
         fprintf(stderr, "Error: Could not open file log.txt\n");
@@ -129,6 +127,38 @@ int newmark(
     }
     #endif
 
+    #if GIF == 1
+    DIR *image_dir = opendir("img");
+    if (image_dir == NULL) {
+        fprintf(stderr, "Error: Could not open directory img\n");
+        fclose(final);
+        fclose(time);
+        #if DEV_3_LOG == 1
+        fclose(log);
+        #endif
+        return -1;
+    }
+
+    struct dirent *image_entry;
+    char filepath[256];
+    for (image_entry = readdir(image_dir); image_entry != NULL; image_entry = readdir(image_dir)) {
+        if (image_entry->d_type == __DT_REG) {
+            if (strlen(image_entry->d_name) > 255-strlen("img/")) {
+                fprintf(stderr, "Error: File name too long: %s\n", image_entry->d_name);
+                continue;
+            }
+            snprintf(filepath, sizeof(filepath), "img/%s", image_entry->d_name);
+            if (remove(filepath) != 0) {
+                fprintf(stderr, "Error: Could not delete file %s\n", filepath);
+            }
+        }
+    }
+
+    closedir(image_dir);
+    #endif
+    return 0;
+
+    fprintf(log, "%.15le\n", model->L_ref*sqrt(model->rho/model->E));
     fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", 0., u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
 
     int return_code = 0;
@@ -214,13 +244,14 @@ int newmark(
         fprintf(log, "%.15le %.15le %.15le %.15le\n", t, Ep, Ek, Ep + Ek);
         #endif
 
+        
         #if GIF == 1
         char name[256];
         struct timespec ts = {
             .tv_sec = 0,
             .tv_nsec = 10000000
         };
-
+        
         sprintf(name, "img/disp_%d.png", (int)(t/dt));
         gmshFltkInitialize(&ierr);
         nanosleep(&ts, NULL);
@@ -228,7 +259,7 @@ int newmark(
         gmshFltkFinalize(&ierr);
         #endif
     }
-
+    
     for (int k = 0; k < n; k++)
         fprintf(final, "%.15le %.15le %.15le %.15le\n", u[2*k], u[2*k+1], v[2*k], v[2*k+1]);
 

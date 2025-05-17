@@ -27,7 +27,8 @@ void display_info(FE_Model *model, int step, struct timespec ts[4]) {
         printf("%30s = %s\n", "Model type", m_str[model->m_type]);
         printf("%30s = %.3e\n", "Young's Modulus E", model->E);
         printf("%30s = %.3e\n", "Poisson ratio nu", model->nu);
-        printf("%30s = %.3e\n\n", "Density rho", model->rho);
+        printf("%30s = %.3e\n", "Density rho", model->rho);
+        printf("%30s = %.3e\n\n", "Frequency", (1.875*1.875/(4.*M_PI*model->L_ref*model->L_ref))*sqrt(model->E*0.0956*0.0956/model->rho));
     } else if (step == 2) {
         char *e_str = (model->e_type == TRI) ? "Triangle" : "Quadrilateral";
         printf("%30s = %s\n", "Element type", e_str);
