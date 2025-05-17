@@ -156,7 +156,6 @@ int newmark(
 
     closedir(image_dir);
     #endif
-    return 0;
 
     fprintf(log, "%.15le\n", model->L_ref*sqrt(model->rho/model->E));
     fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", 0., u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
