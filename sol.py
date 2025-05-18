@@ -50,11 +50,11 @@ def main():
     err_vx = [e['err_vx'] for e in errors]
     err_vy = [e['err_vy'] for e in errors]
 
-    # for e in errors:
-        # print(f"t={e['time']:.5f}", f"err_ux={e['err_ux']:.3e}, err_uy={e['err_uy']:.3e}", 
-            #   f"err_vx={e['err_vx']:.3e}, err_vy={e['err_vy']:.3e}")
-    # plt.plot(times, err_ux, label="Erreur ux")
-    # plt.plot(times, err_uy, label="Erreur uy")
+    for e in errors:
+        print(f"t={e['time']:.5f}", f"err_ux={e['err_ux']:.3e}, err_uy={e['err_uy']:.3e}", 
+              f"err_vx={e['err_vx']:.3e}, err_vy={e['err_vy']:.3e}")
+    plt.plot(times, err_ux, label="Erreur ux")
+    plt.plot(times, err_uy, label="Erreur uy")
     plt.plot(times, err_vx, label="Erreur vx")
     plt.plot(times, err_vy, label="Erreur vy")
     plt.xlabel("Temps [s]")
