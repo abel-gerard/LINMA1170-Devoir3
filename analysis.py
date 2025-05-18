@@ -125,32 +125,33 @@ if __name__ == "__main__":
         dt = t[1] - t[0]
         N = len(t)
 
-        mean = np.mean(Ec)
-        print(f"Mean kinetic energy: {mean}")
-        spectrum = np.abs(fft(Ec-mean))[:N//2]
-        frequencies = fftfreq(N, dt)[:N//2]
+        # mean = np.mean(Ec)
+        # print(f"Mean kinetic energy: {mean}")
+        # spectrum = np.abs(fft(Ec-mean))[:N//2]
+        # frequencies = fftfreq(N, dt)[:N//2]
 
-        peaks_e, _ = find_peaks(spectrum, height=1e-16, distance=10)
-        peaks_e = peaks_e[:2]
-        mid_freq = np.mean(frequencies[peaks_e])
-        diff_freq = frequencies[peaks_e][-1] - frequencies[peaks_e][0]
+        # peaks_e, _ = find_peaks(spectrum, height=1e-16, distance=10)
+        # peaks_e = peaks_e[:2]
+        # mid_freq = np.mean(frequencies[peaks_e])
+        # diff_freq = frequencies[peaks_e][-1] - frequencies[peaks_e][0]
 
-        lines_xs = [frequencies[peaks_e][0]-300, frequencies[peaks_e][1]-300]
-        plt.plot(frequencies, spectrum, color="#D043CC", linewidth=2)
-        plt.hlines(spectrum[peaks_e], lines_xs, frequencies[peaks_e], color="#3E6BFF", linestyles="--")
-        for x, peak in zip(lines_xs, peaks_e):
-            plt.text(x, spectrum[peak], f"{frequencies[peak]:.2f} [Hz]", fontsize=10, color="#3E6BFF", ha="left", va="bottom")
+        # lines_xs = [frequencies[peaks_e][0]-300, frequencies[peaks_e][1]-300]
+        # plt.plot(frequencies, spectrum, color="#D043CC", linewidth=2)
+        # plt.hlines(spectrum[peaks_e], lines_xs, frequencies[peaks_e], color="#3E6BFF", linestyles="--")
+        # for x, peak in zip(lines_xs, peaks_e):
+        #     plt.text(x, spectrum[peak], f"{frequencies[peak]:.2f} [Hz]", fontsize=10, color="#3E6BFF", ha="left", va="bottom")
 
-        plt.plot(frequencies, spectrum, color="#43CCD0", linewidth=2)
-        plt.xlim(mid_freq-1.2*diff_freq, mid_freq+1.2*diff_freq)
-        plt.xlabel("Frequency ($Hz$)", fontsize=12)
-        plt.ylabel("Amplitude", fontsize=12)
-        plt.title("Spectrum of (Detrended) Kinetic Energy", fontsize=14)    
-        plt.grid()
-        plt.show()
+        # plt.plot(frequencies, spectrum, color="#43CCD0", linewidth=2)
+        # plt.xlim(mid_freq-1.2*diff_freq, mid_freq+1.2*diff_freq)
+        # plt.xlabel("Frequency ($Hz$)", fontsize=12)
+        # plt.ylabel("Amplitude", fontsize=12)
+        # plt.title("Spectrum of (Detrended) Kinetic Energy", fontsize=14)    
+        # plt.grid()
+        # plt.show()
         
-        if len(sys.argv) < 3:
-            exit(0)
+        # if len(sys.argv) < 3:
+        #     exit(0)
+
         if len(sys.argv) < 4:
             print("Missing the time file and/or node index.")
             exit(1)
@@ -192,6 +193,7 @@ if __name__ == "__main__":
         # Find closest eigenvalue to the first peak
         fundamental = peaks_x[0]
         closest_eigenvalue = np.argmin(np.abs(freqs - frequencies[fundamental]))
+        print(f"First peak frequency: {frequencies[fundamental]} [Hz]")
         print(f"Closest eigenvalue to the first peak: {freqs[closest_eigenvalue]} [Hz]")
 
         lines_xs = [0, frequencies[peaks][0]*1.2, frequencies[peaks][1]*1.2]
@@ -229,6 +231,10 @@ if __name__ == "__main__":
         vx = moves[:, 3]
         vy = moves[:, 4]
 
+        t *= magic
+        x *= magic
+        y *= magic
+
         # vx = np.convolve(vx, np.ones(20)/20, mode='same')
         # vy = np.convolve(vy, np.ones(20)/20, mode='same')
 
@@ -260,7 +266,7 @@ if __name__ == "__main__":
             # vx_plot.append(vx[factor*frame:factor*(frame+1)])
             # vy_plot.append(vy[factor*frame:factor*(frame+1)])
 
-            time_text.set_text(f'Time = {t[factor*(frame+1)-1]:.3f} s')
+            time_text.set_text(f'Time = {1000*t[factor*(frame+1)-1]:.3f} ms')
 
             # if len(vx_plot) > 200:
             #     vx_plot.pop(0)

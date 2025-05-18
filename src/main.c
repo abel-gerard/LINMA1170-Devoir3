@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
     const int _I = atoi(argv[8]); 
 
     const double gamma = 0.5;
-    const double beta = 0.25;
+    const double beta = 0.25;//0.223;
 
     // Simulation parameters
     const ElementType e_type = TRI;
@@ -81,9 +81,6 @@ int main(int argc, char *argv[]) {
     add_bulk_source(model, rhs);
     enforce_bd_conditions(model, rhs);
     
-    SymBandMatrix *Kbd = model->K;
-    SymBandMatrix *Mbd = model->M;
-    
     double *u;
     double *v;
     int n = read_initial_conditions(initial_file, &u, &v);
@@ -91,7 +88,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: Could not read initial conditions\n");
         return -1;
     }
-
+    
     if (newmark(
         model, u, v,
         n, dt, T, gamma, beta,
@@ -100,7 +97,10 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Error: Newmark algorithm failed\n");
         return -1;
     }
-
+    
+    // SymBandMatrix *Kbd = model->K;
+    // SymBandMatrix *Mbd = model->M;
+    
     // CSRMatrix *Ksp = band_to_sym_csr(Kbd);
     // CSRMatrix *Msp = band_to_sym_csr(Mbd);
     // double eps = 1e-8;

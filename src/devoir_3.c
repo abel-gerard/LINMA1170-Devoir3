@@ -250,7 +250,6 @@ int newmark(
         fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", t, u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
         
         #if DEV_3_LOG == 1
-
         Matvec(K_csr->n, K_csr->row_ptr, K_csr->col_idx, K_csr->data, u, tmp); 
         double Ep = 0.;
         for (int k = 0; k < 2 * n; k++)
