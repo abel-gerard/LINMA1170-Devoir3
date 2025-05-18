@@ -75,13 +75,16 @@ if __name__ == "__main__":
         E  = lines[begin:end, 3]
 
         t *= magic
+        Ep *= 210e9 # rho/magic^2
+        Ec *= 210e9
+        E  *= 210e9
 
         plt.plot(t, Ep, label="$E_p$", color="#43CCD0", linewidth=2, linestyle="--")
         plt.plot(t, Ec, label="$E_c$", color="#D043CC", linewidth=2, linestyle="--")
         plt.plot(t, E, label="$E$", color="#AAD043", linewidth=2)
 
         plt.xlabel("Time [$s$]", fontsize=12)
-        plt.ylabel("Energy", fontsize=12)
+        plt.ylabel("Energy [$J$]", fontsize=12)
         plt.title("Energy vs Time", fontsize=14)
         plt.legend(fontsize=12)
         plt.grid()
@@ -121,6 +124,9 @@ if __name__ == "__main__":
         E = lines[:, 3]
 
         t *= magic
+        Ep *= 210e9
+        Ec *= 210e9
+        E  *= 210e9
 
         dt = t[1] - t[0]
         N = len(t)

@@ -1,7 +1,7 @@
 # LINMA1170 - Analyse numérique
 ## Project 3
 
-## How to use [analysis.py](analysis.py)?
+## How to use [analysis.py](analysis.py)
 First you need to compile and run the main program (`./deformation`) with the `DEV_3_LOG` macro constant on. Then you can run `analysis.py` with the following arguments:
 - `energy`: this displays the potential, kinetic and total energy of the tuning fork. 
     - if a second argument is set, it will be used as the fraction of the time where the plot will start at.
@@ -13,10 +13,10 @@ First you need to compile and run the main program (`./deformation`) with the `D
 
 ## Results
 
-### [Animated tuning fork](animation.gif)
-![GIF of displacement](animation.gif)
+### [Animated tuning fork](animations_et_sons/animation.gif)
+![GIF of displacement](animations_et_sons/animation.gif)
 
-### [Position of some node over time](state_93.gif)
-![Node position](state_93.gif)
+### [Position of some node over time](animations_et_sons/state_93.gif)
+![Node position](animations_et_sons/state_93.gif)
 
-### [Sound produced](tuning_fork.wav)
+### [Sound produced](animations_et_sons/tuning_fork.wav)
