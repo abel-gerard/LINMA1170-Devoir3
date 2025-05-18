@@ -15,8 +15,6 @@
 #include <time.h>
 
 
-const int __DT_REG = 8;
-
 /**
  * @brief Reads the initial conditions from a file into a position and velocity arrays.
  * @param filename The name of the file containing the initial conditions.

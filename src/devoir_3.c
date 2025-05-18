@@ -119,6 +119,9 @@ int newmark(
 
     #if DEV_3_LOG == 1
     FILE *log = fopen("log.txt", "w");
+    
+    fprintf(log, "%.15le\n", model->L_ref*sqrt(model->rho/model->E));
+
     if (log == NULL) {
         fprintf(stderr, "Error: Could not open file log.txt\n");
         fclose(final);
@@ -142,7 +145,7 @@ int newmark(
     struct dirent *image_entry;
     char filepath[256];
     for (image_entry = readdir(image_dir); image_entry != NULL; image_entry = readdir(image_dir)) {
-        if (image_entry->d_type == __DT_REG) {
+        if (image_entry->d_type == 8) { // Regular file
             if (strlen(image_entry->d_name) > 255-strlen("img/")) {
                 fprintf(stderr, "Error: File name too long: %s\n", image_entry->d_name);
                 continue;
@@ -157,13 +160,34 @@ int newmark(
     closedir(image_dir);
     #endif
 
-    fprintf(log, "%.15le\n", model->L_ref*sqrt(model->rho/model->E));
     fprintf(time, "%.15le %.15le %.15le %.15le %.15le\n", 0., u[2*I], u[2*I+1], v[2*I], v[2*I+1]);
 
     int return_code = 0;
 
     CSRMatrix *M_csr = band_to_sym_csr(Mbd);
     CSRMatrix *K_csr = band_to_sym_csr(Kbd);
+
+    #if DEV_3_LOG == 1
+    for (int i = 0; i < M_csr->n+1; i++)
+        fprintf(log, "%d ", M_csr->row_ptr[i]);
+    fprintf(log, "\n");
+    for (int i = 0; i < M_csr->nnz; i++)
+        fprintf(log, "%d ", M_csr->col_idx[i]);
+    fprintf(log, "\n");
+    for (int i = 0; i < M_csr->nnz; i++)
+        fprintf(log, "%.15le ", M_csr->data[i]);
+    fprintf(log, "\n");
+
+    for (int i = 0; i < K_csr->n+1; i++)
+        fprintf(log, "%d ", K_csr->row_ptr[i]);
+    fprintf(log, "\n");
+    for (int i = 0; i < K_csr->nnz; i++)
+        fprintf(log, "%d ", K_csr->col_idx[i]);
+    fprintf(log, "\n");
+    for (int i = 0; i < K_csr->nnz; i++)
+        fprintf(log, "%.15le ", K_csr->data[i]);
+    fprintf(log, "\n");
+    #endif
 
     SymBandMatrix *Mbd_cpy = allocate_sym_band_matrix(Mbd->n, Mbd->k);
     memcpy(Mbd_cpy->data, Mbd->data, sizeof(double) * Mbd->n * (Mbd->k + 1));
